@@ -168,7 +168,7 @@ module.exports = function(webpackEnv) {
       // In development, it does not produce real files.
       filename: isEnvProduction
         ? "static/js/[name].[contenthash:8].js"
-        : isEnvDevelopment && "static/js/bundle.js",
+        : isEnvDevelopment && "static/js/[name].js",
       // TODO: remove this when upgrading to webpack 5
       futureEmitAssets: true,
       // There are also additional JS chunk files if you use code splitting.
@@ -666,20 +666,22 @@ module.exports = function(webpackEnv) {
       new ManifestPlugin({
         fileName: "asset-manifest.json",
         publicPath: paths.publicUrlOrPath,
-        // generate: (seed, files, entrypoints) => {
-        //   const manifestFiles = files.reduce((manifest, file) => {
-        //     manifest[file.name] = file.path;
-        //     return manifest;
-        //   }, seed);
-        //   const entrypointFiles = entrypoints.main.filter(
-        //     fileName => !fileName.endsWith(".map")
-        //   );
-
-        //   return {
-        //     files: manifestFiles,
-        //     entrypoints: entrypointFiles
-        //   };
-        // }
+        generate: (seed, files, entrypoints) => {
+          const manifestFiles = files.reduce((manifest, file) => {
+            manifest[file.name] = file.path;
+            return manifest;
+          }, seed);
+          // const entrypointFiles = entrypoints.main.filter(
+          //   fileName => !fileName.endsWith(".map")
+          // );
+          const entrypointFiles = Object.values(entrypoints)
+            .reduce((result, next) => result.concat(next), [])
+            .filter(fileName => !fileName.endsWith(".map"));
+          return {
+            files: manifestFiles,
+            entrypoints: entrypointFiles
+          };
+        }
       }),
       // Moment.js is an extremely popular library that bundles large locale files
       // by default due to how webpack interprets its code. This is a practical
